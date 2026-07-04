@@ -71,6 +71,7 @@
 /*** X-CTR100 基础功能驱动程序 **********/
 //X-CTR100 初始化函数
 void AX_Init(uint32_t baud);    //X-CTR100初始化
+void AX_DWT_Init(void);          //DWT周期计数器初始化（用于微秒延时）
 
 //X-CTR100 LED控制IO宏定义
 #define AX_LEDG_Off()       HAL_GPIO_WritePin(GPIOD, GPIO_PIN_11, GPIO_PIN_SET)      //LEDG绿色熄灭

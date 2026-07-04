@@ -155,73 +155,54 @@ uint8_t AX_SW_GetSW2Status(void)
 }
 
 /**
-  * @函  数  微秒级延时
+  * @函  数  DWT初始化（使用内核调试监视器中的周期计数器）
+  * @参  数  无
+  * @返回值  无
+  * @说  明  使能DWT_CYCCNT寄存器作为高精度计时源，
+  *          替代SysTick实现微秒/毫秒延时，不会破坏HAL时钟。
+  */
+void AX_DWT_Init(void)
+{
+	/* 使能DWT访问 */
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	/* 清零并启动周期计数器 */
+	DWT->CYCCNT = 0;
+	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+/**
+  * @函  数  微秒级延时（DWT实现，不占用SysTick）
   * @参  数  us：延时长度，单位us
   * @返回值  无
+  * @说  明  使用DWT->CYCCNT周期计数器，CPU频率168MHz时每周期≈5.95ns。
+  *          us=0时跳过延时（纯函数调用开销）。
   */
 void AX_Delayus(uint16_t us)
 {
-	uint32_t temp;
+	if (us == 0) return;
 
-	SysTick->LOAD=21*us;
-	SysTick->VAL=0x00;
-	SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk;
+	uint32_t start = DWT->CYCCNT;
+	uint32_t delay = us * (SystemCoreClock / 1000000U);
 
-	do
+	/* 等待周期数达到目标——32位无符号减法自动处理计数器溢出回绕 */
+	while ((DWT->CYCCNT - start) < delay)
 	{
-		temp=SysTick->CTRL;
+		__NOP();
 	}
-	while((temp&0x01)&&!(temp&(1<<16)));
-
-	SysTick->CTRL&=~SysTick_CTRL_ENABLE_Msk;
-	SysTick->VAL =0X00;
 }
 
 /**
-  * @函  数  毫秒级延时函数
+  * @函  数  毫秒级延时（DWT实现，不占用SysTick）
   * @参  数  ms：延时长度，单位ms
   * @返回值  无
-  * @说  明  注意ms的范围：SysTick->LOAD为24位寄存器,所以,最大延时为:nTime<=0xffffff*8*1000/SYSCLK
-  *          对168M而言,ms<=798ms
-  */
-static void Delay_ms(uint16_t ms)
-{
-	uint32_t temp;
-
-	SysTick->LOAD=(uint32_t)21000*ms;
-	SysTick->VAL =0x00;
-	SysTick->CTRL|=SysTick_CTRL_ENABLE_Msk;
-
-	do
-	{
-		temp=SysTick->CTRL;
-	}while((temp&0x01)&&!(temp&(1<<16)));
-
-	SysTick->CTRL&=~SysTick_CTRL_ENABLE_Msk;
-	SysTick->VAL =0X00;
-}
-
-/**
-  * @函  数  毫秒级延时
-  * @参  数  ms：延时长度，单位ms
-  * @返回值  无
+  * @说  明  循环调用AX_Delayus(1000)实现，避免单次大数溢出风险。
   */
 void AX_Delayms(uint16_t ms)
 {
-	uint8_t repeat=ms/500;
-	uint16_t remain=ms%500;
-
-	while(repeat)
+	while (ms--)
 	{
-		Delay_ms(500);
-		repeat--;
+		AX_Delayus(1000);
 	}
-
-	if(remain)
-	{
-		Delay_ms(remain);
-	}
-
 }
 
 /*** 串口打印相关重定向函数 ***********/

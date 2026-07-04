@@ -34,6 +34,7 @@ god\main.o: ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h
 god\main.o: ../Core/Inc/tim.h
 god\main.o: ../Core/Inc/usart.h
 god\main.o: ../Core/Inc/gpio.h
+god\main.o: ..\PS2_first\remote_control.h
 god\main.o: ..\PS2_first\ax_ps2.h
 god\main.o: ..\PS2_first\ax_basis.h
 god\main.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdio.h

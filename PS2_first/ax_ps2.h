@@ -46,6 +46,7 @@ typedef struct
 /*** X-CTR100 PS2游戏手柄驱动程序 **********/
 void AX_PS2_Init(void);  //PS2初始化
 void AX_PS2_ScanKey(JOYSTICK_TypeDef* JoystickStruct);//PS2读取按键摇杆数值
+uint8_t AX_PS2_GetAckError(void);                      //获取本次扫描的ACK应答状态（0=正常，非0=丢应答）
 
 #endif
 

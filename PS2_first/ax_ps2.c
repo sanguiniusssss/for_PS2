@@ -27,6 +27,7 @@
 
 const uint8_t PS2_cmnd[9] = {0x01, 0x42, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //PS2指令数据
 static uint8_t PS2_data[9] = {0};//接收数据
+static uint8_t ps2_ack_error = 0;  //ACK应答错误计数（本次扫描中丢失应答的字节数）
 
 /**
   * @函  数  PS2初始化
@@ -36,6 +37,9 @@ static uint8_t PS2_data[9] = {0};//接收数据
 void AX_PS2_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct;
+
+	/* 初始化DWT周期计数器，替代SysTick做高精度延时 */
+	AX_DWT_Init();
 
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 
@@ -98,6 +102,13 @@ static uint8_t PS2_ReadWriteData(uint8_t data)
 	}
 	CM_H();
 
+	/* 字节传输后检查ACK应答信号（低电平有效） */
+	AX_Delayus(5);
+	if (ACK_read())  // ACK应为低，读高说明手柄未应答
+	{
+		ps2_ack_error++;
+	}
+
 	//返回接收数据
     return res;
 }
@@ -110,6 +121,8 @@ static uint8_t PS2_ReadWriteData(uint8_t data)
 void AX_PS2_ScanKey(JOYSTICK_TypeDef *JoystickStruct)
 {
 	uint8_t i;
+
+	ps2_ack_error = 0;  //复位ACK错误计数
 
 	ATT_L();
 	AX_Delayus(1);
@@ -128,6 +141,16 @@ void AX_PS2_ScanKey(JOYSTICK_TypeDef *JoystickStruct)
 	JoystickStruct->RJoy_UD = PS2_data[6];
 	JoystickStruct->LJoy_LR = PS2_data[7];
 	JoystickStruct->LJoy_UD = PS2_data[8];
+}
+
+/**
+  * @函  数  获取本次PS2扫描的ACK应答状态
+  * @参  数  无
+  * @返回值  本次扫描中丢失ACK应答的字节数（0=全部正常）
+  */
+uint8_t AX_PS2_GetAckError(void)
+{
+	return ps2_ack_error;
 }
 
 /******************* (C) 版权 2018 XTARK **************************************/

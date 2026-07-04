@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "remote_control.h"
 #include "ax_ps2.h"
 #include <stdio.h>
 
@@ -49,7 +50,7 @@
 
 /* USER CODE BEGIN PV */
 
-JOYSTICK_TypeDef g_Joystick;      // PS2手柄实例
+RC_ctrl_t *g_rc;                  // 遥控器数据指针（双缓冲数组，TEMP=当前帧，LAST=上一帧）
 uint32_t g_lastScanTick = 0;      // 上次扫描时间戳
 uint32_t g_lastPrintTick = 0;     // 上次打印时间戳
 
@@ -98,8 +99,8 @@ int main(void)
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  AX_PS2_Init();                          // PS2手柄GPIO初始化
-  printf("PS2 Controller Test Start\r\n"); // 启动提示
+  g_rc = RemoteControlInit();              // 初始化PS2手柄+遥控器抽象层（内含AX_PS2_Init/DWT_Init）
+  printf("PS2 Remote Control Test Start\r\n");
   g_lastScanTick = HAL_GetTick();
   g_lastPrintTick = HAL_GetTick();
   /* USER CODE END 2 */
@@ -117,21 +118,47 @@ int main(void)
     if (now - g_lastScanTick >= 20)
     {
       g_lastScanTick = now;
-      AX_PS2_ScanKey(&g_Joystick);
+      RemoteControlUpdate();               // 读取PS2原始数据并转换为标准化RC通道
     }
 
     /* ---- 每 200ms 打印一次手柄数据 ---- */
     if (now - g_lastPrintTick >= 200)
     {
       g_lastPrintTick = now;
-      printf("M:%02X B1:%02X B2:%02X RL:%02X RU:%02X LL:%02X LU:%02X\r\n",
-             g_Joystick.mode,
-             g_Joystick.btn1,
-             g_Joystick.btn2,
-             g_Joystick.RJoy_LR,
-             g_Joystick.RJoy_UD,
-             g_Joystick.LJoy_LR,
-             g_Joystick.LJoy_UD);
+
+      if (RemoteControlIsOnline())
+      {
+        RC_Channel_t *ch = &g_rc[TEMP].rc;
+        uint8_t ack_err = AX_PS2_GetAckError();
+
+        printf("M:%02X ACK:%d | "
+               "RockL:%+4d,%+4d RockR:%+4d,%+4d | "
+               "Btn:%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\r\n",
+               g_rc[TEMP].mode,
+               ack_err,
+               ch->rocker_l_x, ch->rocker_l_y,
+               ch->rocker_r_x, ch->rocker_r_y,
+               ch->select   ? 'S' : '-',
+               ch->l3       ? '3' : '-',
+               ch->r3       ? 'R' : '-',
+               ch->start    ? 'T' : '-',
+               ch->up       ? 'U' : '-',
+               ch->down     ? 'D' : '-',
+               ch->left     ? 'L' : '-',
+               ch->right    ? 'r' : '-',
+               ch->l1       ? '1' : '-',
+               ch->l2       ? '2' : '-',
+               ch->r1       ? '!': '-',
+               ch->r2       ? '@' : '-',
+               ch->triangle ? '^' : '-',
+               ch->circle   ? 'O' : '-',
+               ch->cross    ? 'X' : '-',
+               ch->square   ? '#' : '-');
+      }
+      else
+      {
+        printf("PS2 Controller Not Connected\r\n");
+      }
     }
   }
   /* USER CODE END 3 */

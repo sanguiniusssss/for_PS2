@@ -94,13 +94,15 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD3 PD6 */
+  /* PS2手柄引脚——此处由CubeMX生成基础配置，
+   * 后续AX_PS2_Init()会重新初始化为：PD3/PD6(输入上拉)、PD4/PD5/PD7(推挽上拉高速) */
+  /*Configure GPIO pins : PD3 PD6 （PS2: ACK / DATA） */
   GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD4 PD5 PD7 */
+  /*Configure GPIO pins : PD4 PD5 PD7 （PS2: CLK / CMD / ATT） */
   GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
