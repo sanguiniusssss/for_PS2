@@ -87,16 +87,28 @@ static uint8_t PS2_ReadWriteData(uint8_t data)
 		else
 			CM_L();
 		AX_Delayus(5);
-		CLK_H();
+		/* 在时钟上升沿之前读取DATA——PS2协议规定数据在下降沿有效 */
 		if(DATA_read())
 			res |= ref;
 		AX_Delayus(5);
+		CLK_H();
+		AX_Delayus(10);
 	}
 	CM_H();
 	AX_Delayus(5);
 
 	//返回接收数据
     return res;
+}
+
+/**
+  * @函  数  获取PS2原始9字节数据（用于调试）
+  * @参  数  无
+  * @返回值  PS2原始数据数组指针
+  */
+const uint8_t* AX_PS2_GetRawData(void)
+{
+	return PS2_data;
 }
 
 /**

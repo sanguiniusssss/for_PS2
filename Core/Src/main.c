@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "remote_control.h"
+#include "ax_ps2.h"
 #include <stdio.h>
 
 /* USER CODE END Includes */
@@ -154,7 +155,9 @@ int main(void)
       }
       else
       {
-        printf("PS2 Controller Not Connected\r\n");
+        const uint8_t *raw = AX_PS2_GetRawData();
+        printf("PS2 NOT Conn | RAW:%02X %02X %02X %02X %02X %02X %02X %02X %02X\r\n",
+               raw[0], raw[1], raw[2], raw[3], raw[4], raw[5], raw[6], raw[7], raw[8]);
       }
     }
   }

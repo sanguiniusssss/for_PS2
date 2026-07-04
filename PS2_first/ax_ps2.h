@@ -46,6 +46,7 @@ typedef struct
 /*** X-CTR100 PS2游戏手柄驱动程序 **********/
 void AX_PS2_Init(void);  //PS2初始化
 void AX_PS2_ScanKey(JOYSTICK_TypeDef* JoystickStruct);//PS2读取按键摇杆数值
+const uint8_t* AX_PS2_GetRawData(void);               //获取原始9字节PS2数据（用于调试）
 
 #endif
 
