@@ -26,7 +26,6 @@
 /* USER CODE BEGIN Includes */
 
 #include "remote_control.h"
-#include "ax_ps2.h"
 #include <stdio.h>
 
 /* USER CODE END Includes */
@@ -129,13 +128,11 @@ int main(void)
       if (RemoteControlIsOnline())
       {
         RC_Channel_t *ch = &g_rc[TEMP].rc;
-        uint8_t ack_err = AX_PS2_GetAckError();
-
-        printf("M:%02X ACK:%d | "
+        
+        printf("M:%02X | "
                "RockL:%+4d,%+4d RockR:%+4d,%+4d | "
                "Btn:%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\r\n",
                g_rc[TEMP].mode,
-               ack_err,
                ch->rocker_l_x, ch->rocker_l_y,
                ch->rocker_r_x, ch->rocker_r_y,
                ch->select   ? 'S' : '-',
